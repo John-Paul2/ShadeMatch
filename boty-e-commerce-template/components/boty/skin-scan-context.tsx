@@ -74,10 +74,18 @@ export function SkinScanProvider({ children }: { children: ReactNode }) {
         const swatchToUse = presetSwatch || selectedSwatch
         const [skin, tone] = await Promise.all([
           analyzeSkin(fileOrUrl || swatchToUse.code),
-          analyzeTone(swatchToUse.code),
+          analyzeTone(fileOrUrl || swatchToUse.code),
         ])
         setSkinResult(skin)
         setToneResult(tone)
+        if (tone?.shadeCode) {
+          const found = SKIN_TONE_SPECTRUM.find(
+            (s) => s.code === tone.shadeCode || tone.skinTone.includes(s.name)
+          )
+          if (found) {
+            setSelectedSwatch(found)
+          }
+        }
         setHasCompletedScan(true)
       } finally {
         setIsScanning(false)
@@ -123,7 +131,31 @@ export function useSkinScan() {
   return context
 }
 
-export function DemoDataBadge({ className = "" }: { className?: string }) {
+export function DemoDataBadge({
+  isDemo,
+  className = "",
+}: {
+  isDemo?: boolean
+  className?: string
+}) {
+  const context = useContext(SkinScanContext)
+  const effectiveIsDemo =
+    typeof isDemo === "boolean"
+      ? isDemo
+      : (context?.skinResult?.isDemoData ?? context?.toneResult?.isDemoData ?? true)
+
+  if (!effectiveIsDemo) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/40 shadow-sm ${className}`}
+        title="Live analysis from Perfect Corp YouCam AI API"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+        Live YouCam analysis
+      </span>
+    )
+  }
+
   return (
     <span
       className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide bg-secondary/80 text-foreground/80 border border-border ${className}`}

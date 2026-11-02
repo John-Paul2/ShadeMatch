@@ -436,10 +436,10 @@ export default function ProductPage() {
                             setSelectedShade(shade)
                             setViewMode("tryon")
                           }}
-                          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium border boty-transition ${
+                          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-medium border active:scale-95 cursor-pointer boty-transition ${
                             active
                               ? "bg-primary text-primary-foreground border-primary boty-shadow"
-                              : "bg-card text-foreground border-border hover:border-primary/40"
+                              : "bg-card text-foreground border-border hover:border-primary/40 hover:bg-secondary/40"
                           }`}
                         >
                           <span
@@ -465,7 +465,7 @@ export default function ProductPage() {
                       key={size}
                       type="button"
                       onClick={() => setSelectedSize(size)}
-                      className={`px-6 py-3 rounded-full text-sm boty-transition boty-shadow ${
+                      className={`px-6 py-3 rounded-full text-sm active:scale-95 cursor-pointer boty-transition boty-shadow ${
                         selectedSize === size
                           ? "bg-primary text-primary-foreground"
                           : "bg-card text-foreground hover:bg-card/80"
@@ -484,7 +484,7 @@ export default function ProductPage() {
                   <button
                     type="button"
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-foreground/60 hover:text-foreground boty-transition"
+                    className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-foreground/60 hover:text-foreground active:scale-90 cursor-pointer boty-transition"
                     aria-label="Decrease quantity"
                   >
                     <Minus className="w-4 h-4" />
@@ -493,7 +493,7 @@ export default function ProductPage() {
                   <button
                     type="button"
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-foreground/60 hover:text-foreground boty-transition"
+                    className="w-10 h-10 rounded-full bg-background flex items-center justify-center text-foreground/60 hover:text-foreground active:scale-90 cursor-pointer boty-transition"
                     aria-label="Increase quantity"
                   >
                     <Plus className="w-4 h-4" />
@@ -506,7 +506,7 @@ export default function ProductPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium tracking-wide boty-transition boty-shadow ${
+                  className={`flex-1 inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full text-sm font-medium tracking-wide active:scale-95 cursor-pointer boty-transition boty-shadow ${
                     isAdded
                       ? "bg-primary/80 text-primary-foreground"
                       : "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -523,7 +523,7 @@ export default function ProductPage() {
                 </button>
                 <Link
                   href="/#skin-scanner"
-                  className="flex-1 inline-flex items-center justify-center gap-2 bg-transparent border border-foreground/20 text-foreground px-8 py-4 rounded-full text-sm tracking-wide boty-transition hover:bg-foreground/5 text-center"
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-transparent border border-foreground/20 text-foreground px-8 py-4 rounded-full text-sm tracking-wide active:scale-95 cursor-pointer boty-transition hover:bg-foreground/5 text-center"
                 >
                   Re-Calibrate My Skin
                 </Link>

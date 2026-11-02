@@ -449,6 +449,64 @@ export const SHADEMATCH_PRODUCTS: ShadeMatchProduct[] = [
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
+// In-memory caches by image hash so the same photo never costs units twice
+const skinAnalysisCache = new Map<string, SkinAnalysisResult>()
+const toneAnalysisCache = new Map<string, ToneAnalysisResult>()
+
+export function getImageHash(file?: File | string | null): string {
+  if (!file) return "default-seed"
+  if (typeof file === "string") return file
+  return `${file.name}-${file.size}-${(file as any).lastModified || 0}`
+}
+
+async function callServerRoute<T>(
+  endpoint: string,
+  file?: File | string | null,
+  timeoutMs: number = 25000
+): Promise<T | null> {
+  if (typeof window === "undefined") {
+    return null
+  }
+
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    let body: FormData | string
+    const headers: Record<string, string> = {}
+
+    if (file && typeof file === "object" && "arrayBuffer" in file) {
+      const formData = new FormData()
+      formData.append("file", file)
+      body = formData
+    } else {
+      headers["Content-Type"] = "application/json"
+      body = JSON.stringify({ image: file || "/images/bento-skin-model.jpg" })
+    }
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body,
+      signal: controller.signal,
+    })
+
+    if (!res.ok) {
+      return null
+    }
+
+    const json = await res.json()
+    if (json?.success && json?.data) {
+      return json.data as T
+    }
+    return null
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 // Deterministic hash helper from file name or string seed
 function getSeedFromInput(file?: File | string | null): number {
   if (!file) return 6
@@ -460,205 +518,193 @@ function getSeedFromInput(file?: File | string | null): number {
   return hash
 }
 
-/**
- * Simulates YouCam AI Skin Analysis API
- * Never throws raw errors; always resolves with realistic structured mock data.
- */
-export async function analyzeSkin(file?: File | string | null): Promise<SkinAnalysisResult> {
-  try {
-    await delay(450)
-    const seed = getSeedFromInput(file)
-    const skinTypes = [
-      {
-        type: "Combination-Radiant",
-        summary: "Balanced T-zone sebum with mild micro-dehydration along cheekbones",
-        hydration: 82,
-        barrier: 88,
-        radiance: 86,
-      },
-      {
-        type: "Normal-to-Dry",
-        summary: "Delicate lipid barrier that thrives on multi-weight hyaluronic hydration",
-        hydration: 74,
-        barrier: 84,
-        radiance: 81,
-      },
-      {
-        type: "Combination-Balanced",
-        summary: "Resilient epidermal texture with localized UV pigment clustering",
-        hydration: 85,
-        barrier: 91,
-        radiance: 89,
-      },
-    ]
-    const picked = skinTypes[seed % skinTypes.length]
+function generateMockSkinAnalysis(file?: File | string | null): SkinAnalysisResult {
+  const seed = getSeedFromInput(file)
+  const skinTypes = [
+    {
+      type: "Combination-Radiant",
+      summary: "Balanced T-zone sebum with mild micro-dehydration along cheekbones",
+      hydration: 82,
+      barrier: 88,
+      radiance: 86,
+    },
+    {
+      type: "Normal-to-Dry",
+      summary: "Delicate lipid barrier that thrives on multi-weight hyaluronic hydration",
+      hydration: 74,
+      barrier: 84,
+      radiance: 81,
+    },
+    {
+      type: "Combination-Balanced",
+      summary: "Resilient epidermal texture with localized UV pigment clustering",
+      hydration: 85,
+      barrier: 91,
+      radiance: 89,
+    },
+  ]
+  const picked = skinTypes[seed % skinTypes.length]
 
-    return {
-      skinType: picked.type,
-      skinTypeSummary: picked.summary,
-      hydrationLevel: picked.hydration,
-      barrierScore: picked.barrier,
-      radianceIndex: picked.radiance,
-      topConcerns: [
-        {
-          id: "hyperpigmentation",
-          name: "Uneven Tone & Sun Spots",
-          score: 84,
-          severity: "Moderate",
-          zone: "Cheekbones & Upper Bridge",
-          description: "Localized melanin clustering detected; responds strongly to Vitamin C & non-nano mineral SPF.",
-          recommendedActives: ["15% Vitamin C", "Niacinamide", "Rosehip Oil"],
-        },
-        {
-          id: "dehydration",
-          name: "Fine Dehydration Lines",
-          score: 72,
-          severity: "Mild",
-          zone: "Under-Eye & Outer Cheek",
-          description: "Surface moisture depletion creating subtle creasing under concealer; needs hyaluronic acid.",
-          recommendedActives: ["Hyaluronic Acid", "Squalane", "Plant Ceramides"],
-        },
-        {
-          id: "texture",
-          name: "Pore & Surface Texture",
-          score: 61,
-          severity: "Mild",
-          zone: "Center T-Zone & Nasal Ala",
-          description: "Mild sebum congestion around pores; lightweight botanical esters keep finish smooth.",
-          recommendedActives: ["Niacinamide", "Jojoba Ester", "Bakuchiol"],
-        },
-      ],
-      analyzedAt: new Date().toISOString(),
-      isDemoData: true,
-    }
-  } catch {
-    return {
-      skinType: "Combination-Radiant",
-      skinTypeSummary: "Balanced T-zone with mild cheekbone dehydration",
-      hydrationLevel: 82,
-      barrierScore: 88,
-      radianceIndex: 86,
-      topConcerns: [
-        {
-          id: "hyperpigmentation",
-          name: "Uneven Tone & Sun Spots",
-          score: 84,
-          severity: "Moderate",
-          zone: "Cheekbones & Upper Bridge",
-          description: "Localized melanin clustering detected; responds strongly to Vitamin C.",
-          recommendedActives: ["Vitamin C", "Niacinamide"],
-        },
-        {
-          id: "dehydration",
-          name: "Fine Dehydration Lines",
-          score: 72,
-          severity: "Mild",
-          zone: "Under-Eye & Outer Cheek",
-          description: "Surface moisture depletion; benefits from multi-weight hyaluronic acid.",
-          recommendedActives: ["Hyaluronic Acid", "Squalane"],
-        },
-        {
-          id: "texture",
-          name: "Pore & Surface Texture",
-          score: 61,
-          severity: "Mild",
-          zone: "Center T-Zone",
-          description: "Mild pore congestion; lightweight botanical serums refine surface smoothness.",
-          recommendedActives: ["Niacinamide", "Jojoba Oil"],
-        },
-      ],
-      analyzedAt: new Date().toISOString(),
-      isDemoData: true,
-    }
+  return {
+    skinType: picked.type,
+    skinTypeSummary: picked.summary,
+    hydrationLevel: picked.hydration,
+    barrierScore: picked.barrier,
+    radianceIndex: picked.radiance,
+    topConcerns: [
+      {
+        id: "hyperpigmentation",
+        name: "Uneven Tone & Sun Spots",
+        score: 84,
+        severity: "Moderate",
+        zone: "Cheekbones & Upper Bridge",
+        description: "Localized melanin clustering detected; responds strongly to Vitamin C & non-nano mineral SPF.",
+        recommendedActives: ["15% Vitamin C", "Niacinamide", "Rosehip Oil"],
+      },
+      {
+        id: "dehydration",
+        name: "Fine Dehydration Lines",
+        score: 72,
+        severity: "Mild",
+        zone: "Under-Eye & Outer Cheek",
+        description: "Surface moisture depletion creating subtle creasing under concealer; needs hyaluronic acid.",
+        recommendedActives: ["Hyaluronic Acid", "Squalane", "Plant Ceramides"],
+      },
+      {
+        id: "texture",
+        name: "Pore & Surface Texture",
+        score: 61,
+        severity: "Mild",
+        zone: "Center T-Zone & Nasal Ala",
+        description: "Mild sebum congestion around pores; lightweight botanical esters keep finish smooth.",
+        recommendedActives: ["Niacinamide", "Jojoba Ester", "Bakuchiol"],
+      },
+    ],
+    analyzedAt: new Date().toISOString(),
+    isDemoData: true,
   }
 }
 
 /**
- * Simulates YouCam AI Skin Tone & Undertone Spectrophotometric Analysis API
- * Never throws raw errors; always resolves with realistic mock data.
+ * Calls Next.js YouCam Skin API route first with 25s polling timeout.
+ * Caches results in memory by image hash.
+ * On any error, falls back to the existing mock data without breaking the UI.
  */
-export async function analyzeTone(file?: File | string | null): Promise<ToneAnalysisResult> {
+export async function analyzeSkin(file?: File | string | null): Promise<SkinAnalysisResult> {
+  const hashKey = getImageHash(file)
+  if (skinAnalysisCache.has(hashKey)) {
+    return skinAnalysisCache.get(hashKey)!
+  }
+
   try {
-    await delay(450)
-    // Check if a specific swatch ID was passed as a preset string
-    let swatchIndex = 6 // Default: 320W Golden Honey
-    if (typeof file === "string") {
-      const foundIdx = SKIN_TONE_SPECTRUM.findIndex(
-        (s) => s.id === file || s.code === file || file.includes(s.code)
-      )
-      if (foundIdx !== -1) {
-        swatchIndex = foundIdx
-      }
-    }
-
-    const matched = SKIN_TONE_SPECTRUM[swatchIndex] || SKIN_TONE_SPECTRUM[6]
-    const prevSwatch = SKIN_TONE_SPECTRUM[Math.max(0, swatchIndex - 1)]
-    const nextSwatch = SKIN_TONE_SPECTRUM[Math.min(SKIN_TONE_SPECTRUM.length - 1, swatchIndex + 1)]
-
-    const breakdownMap: Record<SkinToneSwatch["undertone"], { warm: number; neutral: number; cool: number; subtitle: string }> = {
-      Warm: {
-        warm: 68,
-        neutral: 22,
-        cool: 10,
-        subtitle: "Golden-peach subsurface warmth that glows in amber & honey pigments",
-      },
-      Olive: {
-        warm: 54,
-        neutral: 34,
-        cool: 12,
-        subtitle: "Balanced green-gold subsurface tone that prevents red or pink oxidation",
-      },
-      Neutral: {
-        warm: 44,
-        neutral: 42,
-        cool: 14,
-        subtitle: "Harmonious warm-cool equilibrium for versatile true-to-tone wear",
-      },
-      Cool: {
-        warm: 18,
-        neutral: 28,
-        cool: 54,
-        subtitle: "Soft rose-almond subsurface reflectance with crisp luminosity",
-      },
-    }
-
-    const breakdown = breakdownMap[matched.undertone]
-    const spectrumPosition = Math.round(((swatchIndex + 0.5) / SKIN_TONE_SPECTRUM.length) * 100)
-    const melaninIndex = Number((22 + swatchIndex * 5.4).toFixed(1))
-
-    return {
-      skinTone: matched.name,
-      shadeCode: matched.code,
-      hex: matched.hex,
-      fitzpatrick: matched.fitzpatrick,
-      undertone: matched.undertone,
-      undertoneSubtitle: breakdown.subtitle,
-      undertoneBreakdown: {
-        warm: breakdown.warm,
-        neutral: breakdown.neutral,
-        cool: breakdown.cool,
-      },
-      melaninIndex,
-      spectrumPosition,
-      adjacentShades: [prevSwatch, matched, nextSwatch],
-      isDemoData: true,
+    const liveResult = await callServerRoute<SkinAnalysisResult>("/api/skin", file, 25000)
+    if (liveResult) {
+      skinAnalysisCache.set(hashKey, liveResult)
+      appendRealScanToRetailer({ skinResult: liveResult })
+      return liveResult
     }
   } catch {
-    const fallback = SKIN_TONE_SPECTRUM[6]
-    return {
-      skinTone: fallback.name,
-      shadeCode: fallback.code,
-      hex: fallback.hex,
-      fitzpatrick: fallback.fitzpatrick,
-      undertone: fallback.undertone,
-      undertoneSubtitle: "Golden-peach subsurface warmth that glows in amber & honey pigments",
-      undertoneBreakdown: { warm: 68, neutral: 22, cool: 10 },
-      melaninIndex: 54.4,
-      spectrumPosition: 58,
-      adjacentShades: [SKIN_TONE_SPECTRUM[5], fallback, SKIN_TONE_SPECTRUM[7]],
-      isDemoData: true,
+    // Graceful fallback to mock data
+  }
+
+  await delay(400)
+  const fallback = generateMockSkinAnalysis(file)
+  skinAnalysisCache.set(hashKey, fallback)
+  return fallback
+}
+
+function generateMockToneAnalysis(file?: File | string | null): ToneAnalysisResult {
+  // Check if a specific swatch ID was passed as a preset string
+  let swatchIndex = 6 // Default: 320W Golden Honey
+  if (typeof file === "string") {
+    const foundIdx = SKIN_TONE_SPECTRUM.findIndex(
+      (s) => s.id === file || s.code === file || file.includes(s.code)
+    )
+    if (foundIdx !== -1) {
+      swatchIndex = foundIdx
     }
   }
+
+  const matched = SKIN_TONE_SPECTRUM[swatchIndex] || SKIN_TONE_SPECTRUM[6]
+  const prevSwatch = SKIN_TONE_SPECTRUM[Math.max(0, swatchIndex - 1)]
+  const nextSwatch = SKIN_TONE_SPECTRUM[Math.min(SKIN_TONE_SPECTRUM.length - 1, swatchIndex + 1)]
+
+  const breakdownMap: Record<SkinToneSwatch["undertone"], { warm: number; neutral: number; cool: number; subtitle: string }> = {
+    Warm: {
+      warm: 68,
+      neutral: 22,
+      cool: 10,
+      subtitle: "Golden-peach subsurface warmth that glows in amber & honey pigments",
+    },
+    Olive: {
+      warm: 54,
+      neutral: 34,
+      cool: 12,
+      subtitle: "Balanced green-gold subsurface tone that prevents red or pink oxidation",
+    },
+    Neutral: {
+      warm: 44,
+      neutral: 42,
+      cool: 14,
+      subtitle: "Harmonious warm-cool equilibrium for versatile true-to-tone wear",
+    },
+    Cool: {
+      warm: 18,
+      neutral: 28,
+      cool: 54,
+      subtitle: "Soft rose-almond subsurface reflectance with crisp luminosity",
+    },
+  }
+
+  const breakdown = breakdownMap[matched.undertone]
+  const spectrumPosition = Math.round(((swatchIndex + 0.5) / SKIN_TONE_SPECTRUM.length) * 100)
+  const melaninIndex = Number((22 + swatchIndex * 5.4).toFixed(1))
+
+  return {
+    skinTone: matched.name,
+    shadeCode: matched.code,
+    hex: matched.hex,
+    fitzpatrick: matched.fitzpatrick,
+    undertone: matched.undertone,
+    undertoneSubtitle: breakdown.subtitle,
+    undertoneBreakdown: {
+      warm: breakdown.warm,
+      neutral: breakdown.neutral,
+      cool: breakdown.cool,
+    },
+    melaninIndex,
+    spectrumPosition,
+    adjacentShades: [prevSwatch, matched, nextSwatch],
+    isDemoData: true,
+  }
+}
+
+/**
+ * Calls Next.js YouCam Tone API route first with 25s polling timeout.
+ * Caches results in memory by image hash.
+ * On any error, falls back to the existing mock data without breaking the UI.
+ */
+export async function analyzeTone(file?: File | string | null): Promise<ToneAnalysisResult> {
+  const hashKey = getImageHash(file)
+  if (toneAnalysisCache.has(hashKey)) {
+    return toneAnalysisCache.get(hashKey)!
+  }
+
+  try {
+    const liveResult = await callServerRoute<ToneAnalysisResult>("/api/tone", file, 25000)
+    if (liveResult) {
+      toneAnalysisCache.set(hashKey, liveResult)
+      appendRealScanToRetailer({ toneResult: liveResult })
+      return liveResult
+    }
+  } catch {
+    // Graceful fallback to mock data
+  }
+
+  await delay(400)
+  const fallback = generateMockToneAnalysis(file)
+  toneAnalysisCache.set(hashKey, fallback)
+  return fallback
 }
 
 /**
@@ -768,7 +814,7 @@ export function getRankedProducts(
           : product.shadeCode,
       matchScore: Math.min(100, Math.max(0, score)),
       matchReason: reason,
-      isDemoData: true,
+      isDemoData: Boolean(skinResult?.isDemoData ?? toneResult?.isDemoData ?? true),
     }
   }).sort((a, b) => b.matchScore - a.matchScore)
 }
@@ -829,11 +875,49 @@ export interface RetailerDashboardData {
   isDemoData: boolean
 }
 
+export interface RecordedRealScan {
+  skinResult?: SkinAnalysisResult | null
+  toneResult?: ToneAnalysisResult | null
+  timestamp: string
+}
+
+const recordedRealScans: RecordedRealScan[] = []
+
+export function appendRealScanToRetailer(scan: {
+  skinResult?: SkinAnalysisResult | null
+  toneResult?: ToneAnalysisResult | null
+}) {
+  recordedRealScans.push({
+    ...scan,
+    timestamp: new Date().toISOString(),
+  })
+
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.setItem("shadematch_real_scans", JSON.stringify(recordedRealScans))
+    } catch {}
+    window.dispatchEvent(new CustomEvent("shadematch:scan-recorded", { detail: scan }))
+  }
+}
+
 /**
- * Generates deterministic, seeded mock data for exactly 200 shopper scans.
+ * Generates deterministic, seeded mock data for shopper scans,
+ * dynamically augmented with every real scan executed during the session.
  */
 export function getRetailerDashboardData(): RetailerDashboardData {
-  // 6 Fitzpatrick / Skin-Tone bands summing to exactly 200 scans:
+  if (typeof window !== "undefined") {
+    try {
+      const saved = window.sessionStorage.getItem("shadematch_real_scans")
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > recordedRealScans.length) {
+          recordedRealScans.splice(0, recordedRealScans.length, ...parsed)
+        }
+      }
+    } catch {}
+  }
+
+  // 6 Fitzpatrick / Skin-Tone bands summing to exactly 200 scans baseline:
   // 18 + 29 + 46 + 52 + 34 + 21 = 200 scans
   const toneDistribution: ToneDistributionItem[] = [
     {
@@ -916,7 +1000,7 @@ export function getRetailerDashboardData(): RetailerDashboardData {
     },
   ]
 
-  // Top concerns across the 200 scans (shoppers have up to 3 concerns each)
+  // Top concerns baseline
   const topConcerns: ConcernTelemetryItem[] = [
     {
       id: "hyperpigmentation",
@@ -965,6 +1049,73 @@ export function getRetailerDashboardData(): RetailerDashboardData {
     },
   ]
 
+  // Incorporate real scans
+  let totalScans = 200 + recordedRealScans.length
+  const hasRealScans = recordedRealScans.length > 0
+
+  for (const scan of recordedRealScans) {
+    if (scan.toneResult) {
+      const fitz = scan.toneResult.fitzpatrick || ""
+      const shade = scan.toneResult.shadeCode || ""
+      let bandIndex = 3 // default: IV
+
+      if (fitz.includes("I") && !fitz.includes("II") && !fitz.includes("IV") && !fitz.includes("V")) {
+        bandIndex = 0
+      } else if (fitz.includes("II") && !fitz.includes("III")) {
+        bandIndex = 1
+      } else if (fitz.includes("III")) {
+        bandIndex = 2
+      } else if (fitz.includes("IV")) {
+        bandIndex = 3
+      } else if (fitz.includes("VI")) {
+        bandIndex = 5
+      } else if (fitz.includes("V")) {
+        bandIndex = 4
+      } else if (shade.startsWith("100") || shade.startsWith("120")) {
+        bandIndex = 0
+      } else if (shade.startsWith("150") || shade.startsWith("210")) {
+        bandIndex = 1
+      } else if (shade.startsWith("240") || shade.startsWith("280")) {
+        bandIndex = 2
+      } else if (shade.startsWith("320") || shade.startsWith("360")) {
+        bandIndex = 3
+      } else if (shade.startsWith("410") || shade.startsWith("450")) {
+        bandIndex = 4
+      } else if (shade.startsWith("510") || shade.startsWith("560")) {
+        bandIndex = 5
+      }
+
+      toneDistribution[bandIndex].scans += 1
+      const undertone = scan.toneResult.undertone
+      if (undertone === "Warm") {
+        toneDistribution[bandIndex].warmScans += 1
+      } else if (undertone === "Neutral") {
+        toneDistribution[bandIndex].neutralScans += 1
+      } else {
+        toneDistribution[bandIndex].coolOliveScans += 1
+      }
+    }
+
+    if (scan.skinResult?.topConcerns) {
+      for (const concern of scan.skinResult.topConcerns) {
+        const found = topConcerns.find(
+          (c) => c.id === concern.id || c.name.toLowerCase().includes(concern.name.toLowerCase())
+        )
+        if (found) {
+          found.scans += 1
+        }
+      }
+    }
+  }
+
+  // Recalculate percentages
+  toneDistribution.forEach((band) => {
+    band.percentage = Number(((band.scans / totalScans) * 100).toFixed(1))
+  })
+  topConcerns.forEach((concern) => {
+    concern.percentage = Number(((concern.scans / totalScans) * 100).toFixed(1))
+  })
+
   // Catalog Gap Report listing high-demand tones/concerns with few matching products
   const catalogGaps: CatalogGapItem[] = [
     {
@@ -972,8 +1123,8 @@ export function getRetailerDashboardData(): RetailerDashboardData {
       title: "Golden Honey & Olive Undertones (320W–360O)",
       category: "Shade Gap",
       swatchHex: "#B67E52",
-      demandScans: 52,
-      demandPercentage: 26.0,
+      demandScans: 52 + (toneDistribution[3].scans - 52),
+      demandPercentage: toneDistribution[3].percentage,
       matchingProductsCount: 2,
       estimatedReturnRisk: "31% return rate from warm/olive oxidation",
       missedMonthlyRevenue: 14800,
@@ -985,8 +1136,8 @@ export function getRetailerDashboardData(): RetailerDashboardData {
       title: "Deep Amber to Espresso Shades (410W–560C)",
       category: "Shade Gap",
       swatchHex: "#764326",
-      demandScans: 55,
-      demandPercentage: 27.5,
+      demandScans: 55 + (toneDistribution[4].scans + toneDistribution[5].scans - 55),
+      demandPercentage: Number((toneDistribution[4].percentage + toneDistribution[5].percentage).toFixed(1)),
       matchingProductsCount: 1,
       estimatedReturnRisk: "36% return rate due to limited intermediate undertones",
       missedMonthlyRevenue: 18400,
@@ -998,8 +1149,8 @@ export function getRetailerDashboardData(): RetailerDashboardData {
       title: "Melanin-Safe Tinted Mineral SPF (Types IV–VI + Hyperpigmentation)",
       category: "Concern & Tone Gap",
       swatchHex: "#8E5531",
-      demandScans: 79,
-      demandPercentage: 39.5,
+      demandScans: topConcerns[3].scans,
+      demandPercentage: topConcerns[3].percentage,
       matchingProductsCount: 1,
       estimatedReturnRisk: "24% cart abandonment on untinted mineral sunscreens",
       missedMonthlyRevenue: 12200,
@@ -1022,8 +1173,10 @@ export function getRetailerDashboardData(): RetailerDashboardData {
   ]
 
   return {
-    totalScans: 200,
-    dateRangeLabel: "Seeded Cohort • 200 Biometric Scans",
+    totalScans,
+    dateRangeLabel: hasRealScans
+      ? `Live Cohort • ${totalScans} Biometric Scans (${recordedRealScans.length} Live YouCam Scans Appended)`
+      : "Seeded Cohort • 200 Biometric Scans",
     estimatedReturnReductionPercent: 64,
     baselineReturnRate: 28.4,
     projectedReturnRate: 10.2,
@@ -1032,6 +1185,6 @@ export function getRetailerDashboardData(): RetailerDashboardData {
     toneDistribution,
     topConcerns,
     catalogGaps,
-    isDemoData: true,
+    isDemoData: !hasRealScans,
   }
 }

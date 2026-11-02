@@ -68,10 +68,10 @@ export function ProductGrid() {
                 key={category.value}
                 type="button"
                 onClick={() => setSelectedCategory(category.value)}
-                className={`relative z-10 px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap ${
+                className={`relative z-10 px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 whitespace-nowrap active:scale-95 cursor-pointer ${
                   selectedCategory === category.value
                     ? "bg-primary text-primary-foreground boty-shadow"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
                 }`}
               >
                 {category.label}
@@ -138,7 +138,7 @@ export function ProductGrid() {
                       {/* Bottom Right: Quick add button */}
                       <button
                         type="button"
-                        className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm flex items-center justify-center opacity-95 group-hover:scale-105 boty-transition boty-shadow border border-border/60"
+                        className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-background/95 backdrop-blur-sm flex items-center justify-center opacity-95 group-hover:scale-105 active:scale-90 cursor-pointer boty-transition boty-shadow border border-border/60"
                         onClick={(e) => {
                           e.preventDefault()
                           e.stopPropagation()
@@ -211,7 +211,7 @@ export function ProductGrid() {
         <div className="text-center mt-12">
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center gap-2 bg-transparent border border-foreground/20 text-foreground px-8 py-4 rounded-full text-sm tracking-wide boty-transition hover:bg-foreground/5"
+            className="inline-flex items-center justify-center gap-2 bg-transparent border border-foreground/20 text-foreground px-8 py-4 rounded-full text-sm tracking-wide boty-transition hover:bg-foreground/5 active:scale-95 cursor-pointer"
           >
             View All Ranked Products ({rankedProducts.length})
           </Link>

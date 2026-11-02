@@ -35,7 +35,18 @@ import { getRetailerDashboardData } from "@/src/services/youcam"
 
 export default function RetailerDashboardPage() {
   const shouldReduceMotion = useReducedMotion()
-  const baseData = useMemo(() => getRetailerDashboardData(), [])
+  const [baseData, setBaseData] = useState(() => getRetailerDashboardData())
+
+  React.useEffect(() => {
+    const refresh = () => setBaseData(getRetailerDashboardData())
+    window.addEventListener("shadematch:scan-recorded", refresh)
+    window.addEventListener("storage", refresh)
+    return () => {
+      window.removeEventListener("shadematch:scan-recorded", refresh)
+      window.removeEventListener("storage", refresh)
+    }
+  }, [])
+
   const [fixedGapIds, setFixedGapIds] = useState<string[]>([])
   const [chartMode, setChartMode] = useState<"scans" | "undertones">("scans")
 
@@ -105,9 +116,9 @@ export default function RetailerDashboardPage() {
                 <span className="text-xs tracking-[0.28em] uppercase text-primary font-semibold">
                   Retailer Merchandising Telemetry
                 </span>
-                <DemoDataBadge />
+                <DemoDataBadge isDemo={baseData.isDemoData} />
                 <span className="text-xs px-3 py-0.5 rounded-full bg-card border border-border text-foreground font-medium">
-                  Seeded Cohort: 200 Scans
+                  {baseData.dateRangeLabel}
                 </span>
               </div>
               <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-foreground leading-tight text-balance">
@@ -121,7 +132,7 @@ export default function RetailerDashboardPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 href="/#skin-scanner"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-card border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-secondary/60 boty-transition boty-shadow"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-card border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-secondary/60 active:scale-95 cursor-pointer boty-transition boty-shadow"
               >
                 <Store className="w-4 h-4 text-primary" />
                 View Shopper Scanner
@@ -130,7 +141,7 @@ export default function RetailerDashboardPage() {
                 type="button"
                 onClick={handleFixAllGaps}
                 disabled={fixedGapIds.length === baseData.catalogGaps.length}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium hover:bg-primary/90 boty-transition boty-shadow disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground text-xs sm:text-sm font-medium hover:bg-primary/90 active:scale-95 cursor-pointer boty-transition boty-shadow disabled:opacity-60"
               >
                 <PackagePlus className="w-4 h-4" />
                 {fixedGapIds.length === baseData.catalogGaps.length
@@ -289,7 +300,7 @@ export default function RetailerDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setChartMode("scans")}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium boty-transition ${
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium active:scale-95 cursor-pointer boty-transition ${
                         chartMode === "scans"
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:text-foreground"
@@ -300,7 +311,7 @@ export default function RetailerDashboardPage() {
                     <button
                       type="button"
                       onClick={() => setChartMode("undertones")}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium boty-transition ${
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium active:scale-95 cursor-pointer boty-transition ${
                         chartMode === "undertones"
                           ? "bg-primary text-primary-foreground"
                           : "text-muted-foreground hover:text-foreground"
@@ -646,7 +657,7 @@ export default function RetailerDashboardPage() {
                       <button
                         type="button"
                         onClick={() => handleToggleFixGap(gap.id)}
-                        className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-medium tracking-wide boty-transition boty-shadow flex-shrink-0 ${
+                        className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-medium tracking-wide active:scale-95 cursor-pointer boty-transition boty-shadow flex-shrink-0 ${
                           isFixed
                             ? "bg-secondary text-foreground hover:bg-secondary/80"
                             : "bg-primary text-primary-foreground hover:bg-primary/90"

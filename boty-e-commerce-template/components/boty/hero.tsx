@@ -88,7 +88,7 @@ export function Hero() {
             >
               <Link
                 href="#skin-scanner"
-                className="group inline-flex items-center justify-center gap-3 bg-primary text-primary-foreground px-8 py-4 rounded-full text-sm font-medium tracking-wide boty-transition hover:bg-primary/90 boty-shadow"
+                className="group inline-flex items-center justify-center gap-3 bg-primary text-primary-foreground px-8 py-4 rounded-full text-sm font-medium tracking-wide boty-transition hover:bg-primary/90 active:scale-95 cursor-pointer boty-shadow"
               >
                 <ScanFace className="w-4 h-4" />
                 Scan my skin
@@ -96,7 +96,7 @@ export function Hero() {
               </Link>
               <Link
                 href="#matched-products"
-                className="inline-flex items-center justify-center gap-2 bg-background/85 backdrop-blur-sm border border-foreground/20 text-foreground px-7 py-4 rounded-full text-sm tracking-wide boty-transition hover:bg-background boty-shadow"
+                className="inline-flex items-center justify-center gap-2 bg-background/85 backdrop-blur-sm border border-foreground/20 text-foreground px-7 py-4 rounded-full text-sm tracking-wide boty-transition hover:bg-background active:scale-95 cursor-pointer boty-shadow"
               >
                 <Sparkles className="w-4 h-4 text-primary" />
                 Explore Matched Formulas

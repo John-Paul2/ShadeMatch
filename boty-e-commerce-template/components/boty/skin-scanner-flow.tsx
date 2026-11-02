@@ -315,7 +315,7 @@ export function SkinScannerFlow() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isScanningLocal}
-                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-background border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-background/80 boty-transition boty-shadow disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-background border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-background/80 active:scale-95 cursor-pointer boty-transition boty-shadow disabled:opacity-50"
               >
                 <Upload className="w-4 h-4 text-primary" />
                 Upload Photo
@@ -329,7 +329,7 @@ export function SkinScannerFlow() {
                   fileInputRef.current?.click()
                 }}
                 disabled={isScanningLocal}
-                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-background border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-background/80 boty-transition boty-shadow disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-background border border-border text-foreground text-xs sm:text-sm font-medium hover:bg-background/80 active:scale-95 cursor-pointer boty-transition boty-shadow disabled:opacity-50"
               >
                 <Camera className="w-4 h-4 text-primary" />
                 Use Camera
@@ -356,10 +356,10 @@ export function SkinScannerFlow() {
                       type="button"
                       onClick={() => handleSampleSelect(sample)}
                       disabled={isScanningLocal}
-                      className={`px-2.5 py-2 rounded-xl text-left border text-xs boty-transition ${
+                      className={`px-2.5 py-2 rounded-xl text-left border text-xs active:scale-95 cursor-pointer boty-transition ${
                         active
                           ? "bg-primary text-primary-foreground border-primary font-medium"
-                          : "bg-background/80 text-foreground border-border/60 hover:bg-background"
+                          : "bg-background/80 text-foreground border-border/60 hover:bg-background hover:border-primary/40"
                       }`}
                     >
                       <span className="block truncate">{sample.label}</span>
@@ -374,7 +374,7 @@ export function SkinScannerFlow() {
               type="button"
               onClick={handleStartScan}
               disabled={isScanningLocal}
-              className="w-full inline-flex items-center justify-center gap-2.5 bg-primary text-primary-foreground py-4 px-6 rounded-full text-sm font-medium tracking-wide boty-transition hover:bg-primary/90 boty-shadow disabled:opacity-60"
+              className="w-full inline-flex items-center justify-center gap-2.5 bg-primary text-primary-foreground py-4 px-6 rounded-full text-sm font-medium tracking-wide boty-transition hover:bg-primary/90 active:scale-95 cursor-pointer boty-shadow disabled:opacity-60"
             >
               {isScanningLocal ? (
                 <>
@@ -787,7 +787,7 @@ export function SkinScannerFlow() {
                           <button
                             type="button"
                             onClick={handleShareGiftNote}
-                            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 boty-transition"
+                            className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 active:scale-95 cursor-pointer boty-transition"
                           >
                             {copiedGiftNote ? (
                               <>
@@ -812,7 +812,7 @@ export function SkinScannerFlow() {
                                 image: "/images/products/pump-bottles-cream.png",
                               })
                             }
-                            className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full bg-card border border-border text-foreground text-xs font-medium hover:bg-secondary/60 boty-transition"
+                            className="inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full bg-card border border-border text-foreground text-xs font-medium hover:bg-secondary/60 active:scale-95 cursor-pointer boty-transition"
                           >
                             <ShoppingBag className="w-3.5 h-3.5 text-primary" />
                             Add Gift to Bag

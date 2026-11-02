@@ -67,7 +67,7 @@ export function CartDrawer() {
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="p-1.5 hover:bg-muted boty-transition rounded-l-full"
+                          className="p-1.5 hover:bg-muted active:scale-90 cursor-pointer boty-transition rounded-l-full"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="w-3 h-3" />
@@ -76,7 +76,7 @@ export function CartDrawer() {
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="p-1.5 hover:bg-muted boty-transition rounded-r-full"
+                          className="p-1.5 hover:bg-muted active:scale-90 cursor-pointer boty-transition rounded-r-full"
                           aria-label="Increase quantity"
                         >
                           <Plus className="w-3 h-3" />
@@ -86,7 +86,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         onClick={() => removeItem(item.id)}
-                        className="p-1.5 text-muted-foreground hover:text-destructive boty-transition"
+                        className="p-1.5 text-muted-foreground hover:text-destructive active:scale-90 cursor-pointer boty-transition"
                         aria-label="Remove item"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -125,7 +125,7 @@ export function CartDrawer() {
             {/* Checkout Button */}
             <button
               type="button"
-              className="w-full bg-primary text-primary-foreground py-4 rounded-full font-medium hover:bg-primary/90 boty-transition"
+              className="w-full bg-primary text-primary-foreground py-4 rounded-full font-medium hover:bg-primary/90 active:scale-95 cursor-pointer boty-transition"
             >
               Checkout
             </button>
@@ -133,7 +133,7 @@ export function CartDrawer() {
             <DrawerClose asChild>
               <button
                 type="button"
-                className="w-full border border-border text-foreground py-4 rounded-full font-medium hover:bg-muted boty-transition"
+                className="w-full border border-border text-foreground py-4 rounded-full font-medium hover:bg-muted active:scale-95 cursor-pointer boty-transition"
               >
                 Continue Shopping
               </button>

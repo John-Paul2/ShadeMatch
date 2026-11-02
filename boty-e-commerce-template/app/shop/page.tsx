@@ -81,10 +81,10 @@ export default function ShopPage() {
                   key={category.value}
                   type="button"
                   onClick={() => setSelectedCategory(category.value)}
-                  className={`px-4 py-2 rounded-full text-sm capitalize boty-transition ${
+                  className={`px-4 py-2 rounded-full text-sm capitalize active:scale-95 cursor-pointer boty-transition ${
                     selectedCategory === category.value
                       ? "bg-primary text-primary-foreground"
-                      : "bg-card text-foreground/70 hover:text-foreground boty-shadow"
+                      : "bg-card text-foreground/70 hover:text-foreground hover:bg-card/90 boty-shadow"
                   }`}
                 >
                   {category.label}
@@ -190,7 +190,7 @@ export default function ShopPage() {
                         {/* Quick add button */}
                         <button
                           type="button"
-                          className="absolute bottom-4 right-4 w-11 h-11 rounded-full bg-background/95 backdrop-blur-sm flex items-center justify-center boty-transition boty-shadow border border-border/60"
+                          className="absolute bottom-4 right-4 w-11 h-11 rounded-full bg-background/95 backdrop-blur-sm flex items-center justify-center group-hover:scale-105 active:scale-90 cursor-pointer boty-transition boty-shadow border border-border/60"
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
